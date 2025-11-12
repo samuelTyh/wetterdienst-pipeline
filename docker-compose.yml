@@ -77,7 +77,7 @@ services:
       - ./flows:/app/flows
     working_dir: /app
 
-  # Pipeline Application (for manual flow runs and deployments)
+  # Pipeline Application (serves flows to Prefect)
   pipeline:
     build:
       context: .
@@ -99,13 +99,13 @@ services:
       PREFECT_API_URL: http://prefect-server:4200/api
       # Application settings
       BRIGHTSKY_BASE_URL: https://api.brightsky.dev
-      POSTAL_CODE_PREFIX: "10" # Berlin area - can be changed
     volumes:
       - ./src:/app/src
       - ./flows:/app/flows
+      - ./scripts/serve_all_flows.py:/app/serve_all_flows.py
     working_dir: /app
-    # Keep container running for interactive commands
-    command: tail -f /dev/null
+    # Serve all flows (makes them visible in UI)
+    command: python serve_all_flows.py
 
 volumes:
   postgres_data:

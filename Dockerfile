@@ -17,7 +17,7 @@ COPY pyproject.toml ./
 COPY .python-version ./
 COPY src/ ./src/
 COPY flows/ ./flows/
-COPY tests/ ./tests/
+COPY scripts/serve_all_flows.py ./
 
 # Install uv
 RUN pip install uv
@@ -28,4 +28,5 @@ RUN uv pip install --system -e .
 # Set Python path
 ENV PYTHONPATH=/app
 
-CMD ["python", "-m", "prefect.cli", "worker", "start", "--pool", "default-pool", "--type", "process"]
+# Default command (can be overridden in docker-compose)
+CMD ["python", "serve_all_flows.py"]

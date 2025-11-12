@@ -18,9 +18,6 @@ class Settings(BaseSettings):
     # BrightSky API settings
     brightsky_base_url: str = "https://api.brightsky.dev"
 
-    # Postal code filtering (e.g., "10" for Berlin, "80" for Munich)
-    postal_code_prefix: str = "10"
-
     # Prefect settings
     prefect_api_url: str = "http://localhost:4200/api"
 
