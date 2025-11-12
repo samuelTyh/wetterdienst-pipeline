@@ -68,19 +68,20 @@ uv sync
 
 2. Start the services:
 ```bash
-docker-compose up -d
+chmod +x scripts/service.sh
+./scripts/service.sh start
 ```
 
 3. Wait for services to be healthy (30-60 seconds):
 ```bash
 # Check status
-docker-compose ps
+./scripts/service.sh status
 
 # Watch logs
-docker-compose logs -f
+./scripts/service.sh logs
 ```
 
-4. Create a work pool in Prefect UI:
+4. Create a work pool in Prefect UI (optional):
 ```bash
 # Access Prefect UI at http://localhost:4200
 # Or create work pool via CLI:
