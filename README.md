@@ -6,32 +6,33 @@
 weather-pipeline/
 ├── src/
 │   ├── __init__.py
-│   ├── config.py                 # Configuration management
+│   ├── config.py                   # Configuration management
 │   ├── database/
 │   │   ├── __init__.py
-│   │   ├── clickhouse_client.py  # ClickHouse connection and operations
-│   │   └── schema.py              # Database schema definitions
+│   │   ├── clickhouse_client.py    # ClickHouse connection helper
+│   │   ├── operations.py           # ClickHouse operations
+│   │   └── schema.py               # Database schema definitions
 │   ├── ingestion/
 │   │   ├── __init__.py
-│   │   ├── postal_codes.py        # Postal code data ingestion
+│   │   ├── postal_codes.py         # Postal code data ingestion
 │   │   ├── weather_observations.py # Weather observations ingestion
-│   │   └── weather_forecasts.py   # Weather forecasts ingestion
+│   │   └── weather_forecasts.py    # Weather forecasts ingestion
 │   ├── transformation/
 │   │   ├── __init__.py
-│   │   ├── cleaners.py            # Data cleaning functions
-│   │   └── aggregators.py         # Data aggregation logic
+│   │   ├── cleaners.py             # Data cleaning functions
+│   │   └── aggregators.py          # Data aggregation logic
 │   └── utils/
 │       ├── __init__.py
-│       └── geo.py                 # Geospatial utilities
+│       └── geo.py                  # Geospatial utilities
 ├── flows/
 │   ├── __init__.py
-│   ├── ingest_postal_codes.py     # Prefect flow for postal codes
-│   ├── ingest_observations.py     # Prefect flow for observations
-│   ├── ingest_forecasts.py        # Prefect flow for forecasts
-│   └── transform_weather.py       # Prefect flow for transformations
+│   ├── ingest_postal_codes.py      # Prefect flow for postal codes
+│   ├── ingest_observations.py      # Prefect flow for observations
+│   ├── ingest_forecasts.py         # Prefect flow for forecasts
+│   └── transform_weather.py        # Prefect flow for transformations
 ├── clickhouse/
 │   └── init/
-│       └── 01_init.sql            # Initial database schema
+│       └── 01_init.sql             # Initial database schema
 ├── tests/
 │   └── __init__.py
 ├── .python-version
@@ -47,8 +48,9 @@ weather-pipeline/
 
 - **Python 3.13**: Latest Python version
 - **uv**: Fast Python package manager
+- **PostgreSQL 15**: Prefect metadata database
 - **ClickHouse**: High-performance columnar database for time-series and analytical queries
-- **Prefect**: Modern workflow orchestration framework
+- **Prefect 3**: Modern workflow orchestration framework with separate server and worker
 - **Docker Compose**: Container orchestration for easy deployment
 - **httpx**: Modern async HTTP client for API calls
 - **pandas/geopandas**: Data manipulation and geospatial operations
@@ -69,9 +71,26 @@ uv sync
 docker-compose up -d
 ```
 
-3. Access services:
-- ClickHouse: http://localhost:8123
-- Prefect UI: http://localhost:4200
+3. Wait for services to be healthy (30-60 seconds):
+```bash
+# Check status
+docker-compose ps
+
+# Watch logs
+docker-compose logs -f
+```
+
+4. Create a work pool in Prefect UI:
+```bash
+# Access Prefect UI at http://localhost:4200
+# Or create work pool via CLI:
+docker-compose exec prefect-server prefect work-pool create default-pool --type process
+```
+
+5. Access services:
+- **Prefect UI**: http://localhost:4200
+- **ClickHouse**: http://localhost:8123 (user: weather_user, password: weather_pass)
+- **PostgreSQL**: localhost:5432 (user: prefect, password: prefect_pass)
 
 ## Development Setup
 
@@ -92,13 +111,22 @@ uv run ruff check .
 ## Configuration
 
 Environment variables can be set in docker-compose.yml or via .env file:
-- `CLICKHOUSE_HOST`: ClickHouse server host
-- `CLICKHOUSE_PORT`: ClickHouse server port
-- `CLICKHOUSE_USER`: Database user
-- `CLICKHOUSE_PASSWORD`: Database password
-- `CLICKHOUSE_DATABASE`: Database name
+
+**ClickHouse:**
+- `CLICKHOUSE_HOST`: ClickHouse server host (default: clickhouse)
+- `CLICKHOUSE_PORT`: ClickHouse server port (default: 8123)
+- `CLICKHOUSE_USER`: Database user (default: weather_user)
+- `CLICKHOUSE_PASSWORD`: Database password (default: weather_pass)
+- `CLICKHOUSE_DATABASE`: Database name (default: weather)
+
+**Prefect:**
+- `PREFECT_API_URL`: Prefect API URL for workers (default: http://prefect-server:4200/api)
+- `PREFECT_UI_API_URL`: Prefect API URL for browser UI (default: http://localhost:4200/api)
+- `PREFECT_API_DATABASE_CONNECTION_URL`: PostgreSQL connection string
+
+**Application:**
 - `POSTAL_CODE_PREFIX`: Postal code prefix to filter (e.g., "10" for Berlin)
-- `BRIGHTSKY_BASE_URL`: BrightSky API base URL
+- `BRIGHTSKY_BASE_URL`: BrightSky API base URL (default: https://api.brightsky.dev)
 
 ## Next Steps
 
