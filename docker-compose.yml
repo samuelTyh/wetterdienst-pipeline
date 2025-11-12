@@ -1,0 +1,114 @@
+services:
+  # PostgreSQL Database for Prefect
+  postgres:
+    image: postgres:15-alpine
+    container_name: weather-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: prefect_pass
+      POSTGRES_DB: prefect
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prefect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ClickHouse Database for Weather Data
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.11
+    container_name: weather-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123" # HTTP interface
+      - "9000:9000" # Native interface
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d
+    environment:
+      CLICKHOUSE_DB: weather
+      CLICKHOUSE_USER: weather_user
+      CLICKHOUSE_PASSWORD: weather_pass
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Prefect Server
+  prefect-server:
+    image: prefecthq/prefect:3-python3.13
+    container_name: weather-prefect-server
+    restart: unless-stopped
+    command: prefect server start
+    ports:
+      - "4200:4200"
+    environment:
+      PREFECT_SERVER_API_HOST: 0.0.0.0
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect_pass@postgres:5432/prefect
+      PREFECT_UI_API_URL: http://localhost:4200/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Prefect Worker
+  prefect-worker:
+    image: prefecthq/prefect:3-python3.13
+    container_name: weather-prefect-worker
+    restart: unless-stopped
+    command: prefect worker start --pool default-pool --type process --with-healthcheck
+    environment:
+      PREFECT_API_URL: http://prefect-server:4200/api
+    depends_on:
+      prefect-server:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./flows:/app/flows
+    working_dir: /app
+
+  # Pipeline Application (for manual flow runs and deployments)
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weather-pipeline
+    restart: unless-stopped
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      prefect-server:
+        condition: service_started
+    environment:
+      # ClickHouse settings
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_USER: weather_user
+      CLICKHOUSE_PASSWORD: weather_pass
+      CLICKHOUSE_DATABASE: weather
+      # Prefect settings
+      PREFECT_API_URL: http://prefect-server:4200/api
+      # Application settings
+      BRIGHTSKY_BASE_URL: https://api.brightsky.dev
+      POSTAL_CODE_PREFIX: "10" # Berlin area - can be changed
+    volumes:
+      - ./src:/app/src
+      - ./flows:/app/flows
+    working_dir: /app
+    # Keep container running for interactive commands
+    command: tail -f /dev/null
+
+volumes:
+  postgres_data:
+  clickhouse_data:
