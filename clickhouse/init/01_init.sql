@@ -22,8 +22,8 @@ ORDER BY plz;
 CREATE TABLE IF NOT EXISTS raw.weather_stations
 (
     id UInt32,                      -- source_id from BrightSky
-    dwd_station_id String,          -- DWD station identifier (e.g., "01766")
-    wmo_station_id String,          -- WMO station identifier (e.g., "10315")
+    dwd_station_id Nullable(String),-- DWD station identifier (e.g., "01766")
+    wmo_station_id Nullable(String),-- WMO station identifier (e.g., "10315")
     station_name String,            -- Human-readable station name
     observation_type String,        -- Type: "forecast", "observation", "historical", "current", "synop"
     lat Float64,                    -- Latitude
@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS raw.weather_stations
     ingested_at DateTime DEFAULT now()
 )
 ENGINE = ReplacingMergeTree(ingested_at)
+PRIMARY KEY (id)
 ORDER BY (id, observation_type)
 COMMENT 'Weather station metadata from BrightSky API /sources endpoint';
 

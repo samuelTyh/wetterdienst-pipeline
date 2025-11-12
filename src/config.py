@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     # Prefect settings
     prefect_api_url: str = "http://localhost:4200/api"
 
+    # Application settings
+    postal_code_prefixes: list[str] = ["10", "12", "13"]  # e.g., "10", "12", "13" for Berlin
+    max_distance: int = 10000
+
     @property
     def clickhouse_url(self) -> str:
         """Get ClickHouse connection URL."""

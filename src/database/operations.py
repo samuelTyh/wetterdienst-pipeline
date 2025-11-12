@@ -180,22 +180,22 @@ def get_weather_stations(
 
     # If postal code prefix provided, do spatial filtering
     # This is simplified - in practice, you'd do proper spatial joins
-    if postal_code_prefix:
-        # Get bounding box of postal codes with this prefix
-        bounds_query = f"""
-        SELECT
-            min(centroid_lat) as min_lat,
-            max(centroid_lat) as max_lat,
-            min(centroid_lon) as min_lon,
-            max(centroid_lon) as max_lon
-        FROM raw.postal_codes
-        WHERE plz LIKE '{postal_code_prefix}%'
-        """
-        bounds_result = client.execute(bounds_query)
-        if bounds_result.result_rows:
-            min_lat, max_lat, min_lon, max_lon = bounds_result.result_rows[0]
-            query += f" AND lat BETWEEN {min_lat} AND {max_lat}"
-            query += f" AND lon BETWEEN {min_lon} AND {max_lon}"
+    # if postal_code_prefix:
+    #     # Get bounding box of postal codes with this prefix
+    #     bounds_query = f"""
+    #     SELECT
+    #         min(centroid_lat) as min_lat,
+    #         max(centroid_lat) as max_lat,
+    #         min(centroid_lon) as min_lon,
+    #         max(centroid_lon) as max_lon
+    #     FROM raw.postal_codes
+    #     WHERE plz LIKE '{postal_code_prefix}%'
+    #     """
+    #     bounds_result = client.execute(bounds_query)
+    #     if bounds_result.result_rows:
+    #         min_lat, max_lat, min_lon, max_lon = bounds_result.result_rows[0]
+    #         query += f" AND lat BETWEEN {min_lat} AND {max_lat}"
+    #         query += f" AND lon BETWEEN {min_lon} AND {max_lon}"
 
     query += " ORDER BY id"
     return client.query_df(query)

@@ -13,6 +13,7 @@ from prefect import serve
 
 # Import all flow functions
 from flows.ingest_postal_codes import ingest_postal_codes_flow
+from flows.ingest_weather_stations import ingest_weather_stations_flow
 
 # Note: Import other flows as they are created
 # from flows.ingest_observations import ingest_observations_flow
@@ -41,6 +42,21 @@ def main():
             version="1.0",
         )
     )
+
+    # Weather Stations Ingestion (manual/periodic)
+    print("→ Configuring: weather-stations-ingestion")
+    berlin_postal_code_prefix = ["10", "12", "13"]
+    print(f"→ Berlin weather stations ingestion: {berlin_postal_code_prefix}")
+    for prefix in berlin_postal_code_prefix:
+        deployments.append(
+            ingest_weather_stations_flow.to_deployment(
+                name=f"weather-stations-prefix-{prefix}",
+                description="Ingest weather station metadata from BrightSky API",
+                parameters={"prefix": f"{prefix}"},
+                tags=["ingestion", "weather-stations", "manual"],
+                version="1.0",
+            )
+        )
 
     # Weather Observations Ingestion (hourly)
     # Uncomment when flow is created:

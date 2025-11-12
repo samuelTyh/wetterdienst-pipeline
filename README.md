@@ -15,6 +15,7 @@ weather-pipeline/
 │   ├── ingestion/
 │   │   ├── __init__.py
 │   │   ├── postal_codes.py         # Postal code data ingestion
+│   │   ├── weather_stations.py     # Weather stations data ingestion
 │   │   ├── weather_observations.py # Weather observations ingestion
 │   │   └── weather_forecasts.py    # Weather forecasts ingestion
 │   ├── transformation/
@@ -27,6 +28,7 @@ weather-pipeline/
 ├── flows/
 │   ├── __init__.py
 │   ├── ingest_postal_codes.py      # Prefect flow for postal codes
+│   ├── ingest_stations.py          # Prefect flow for stations
 │   ├── ingest_observations.py      # Prefect flow for observations
 │   ├── ingest_forecasts.py         # Prefect flow for forecasts
 │   └── transform_weather.py        # Prefect flow for transformations
@@ -126,7 +128,6 @@ Environment variables can be set in docker-compose.yml or via .env file:
 - `PREFECT_API_DATABASE_CONNECTION_URL`: PostgreSQL connection string
 
 **Application:**
-- `POSTAL_CODE_PREFIX`: Postal code prefix to filter (e.g., "10" for Berlin)
 - `BRIGHTSKY_BASE_URL`: BrightSky API base URL (default: https://api.brightsky.dev)
 
 ## Next Steps
