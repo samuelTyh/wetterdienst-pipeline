@@ -31,7 +31,6 @@ services:
       - clickhouse_data:/var/lib/clickhouse
       - ./clickhouse/init:/docker-entrypoint-initdb.d
     environment:
-      CLICKHOUSE_DB: weather
       CLICKHOUSE_USER: weather_user
       CLICKHOUSE_PASSWORD: weather_pass
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
@@ -96,7 +95,6 @@ services:
       CLICKHOUSE_PORT: 8123
       CLICKHOUSE_USER: weather_user
       CLICKHOUSE_PASSWORD: weather_pass
-      CLICKHOUSE_DATABASE: weather
       # Prefect settings
       PREFECT_API_URL: http://prefect-server:4200/api
       # Application settings

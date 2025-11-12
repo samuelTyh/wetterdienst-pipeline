@@ -17,6 +17,7 @@ COPY pyproject.toml ./
 COPY .python-version ./
 COPY src/ ./src/
 COPY flows/ ./flows/
+COPY tests/ ./tests/
 
 # Install uv
 RUN pip install uv

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     clickhouse_port: int = 8123
     clickhouse_user: str = "weather_user"
     clickhouse_password: str = "weather_pass"
-    clickhouse_database: str = "weather"
+    # Note: We use multiple databases (raw, staging), so no default database
 
     # BrightSky API settings
     brightsky_base_url: str = "https://api.brightsky.dev"
