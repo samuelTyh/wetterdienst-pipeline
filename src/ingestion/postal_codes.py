@@ -57,6 +57,10 @@ def parse_postal_codes(geojson_data: dict[str, Any], prefix: str | None = None) 
     # Convert to GeoDataFrame
     gdf = gpd.GeoDataFrame.from_features(geojson_data["features"])
 
+    # Ensure CRS is set, fallback to EPSG:4326 if missing
+    if gdf.crs is None:
+        gdf.set_crs(epsg=4326, inplace=True)
+
     # Extract postcode from properties (new format uses 'postcode' field)
     if "postcode" in gdf.columns:
         gdf["plz"] = gdf["postcode"]
@@ -71,10 +75,12 @@ def parse_postal_codes(geojson_data: dict[str, Any], prefix: str | None = None) 
     if prefix:
         gdf = gdf[gdf["plz"].str.startswith(prefix)]
 
-    # Calculate centroids
-    gdf["centroid"] = gdf.geometry.centroid
-    gdf["centroid_lon"] = gdf["centroid"].x
-    gdf["centroid_lat"] = gdf["centroid"].y
+    # Calculate centroids using Equal Area Cylindrical projection
+    cea_gdf = gdf.to_crs("+proj=cea")
+    centroids = cea_gdf.centroid.to_crs(gdf.crs)
+
+    gdf["centroid_lon"] = centroids.x
+    gdf["centroid_lat"] = centroids.y
 
     # Convert geometry to GeoJSON string for storage
     gdf["geometry_str"] = gdf.geometry.apply(lambda geom: json.dumps(geom.__geo_interface__))
