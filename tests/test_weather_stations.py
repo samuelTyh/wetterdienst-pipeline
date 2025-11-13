@@ -205,7 +205,7 @@ def main():
     print(f"Configuration:")
     print(f"  ClickHouse host: {settings.clickhouse_host}")
     print(f"  BrightSky API: {settings.brightsky_base_url}")
-    print(f"  Postal code prefix: {settings.postal_code_prefix or 'all'}")
+    print(f"  Postal code prefix: {settings.postal_code_prefixes or 'all'}")
     print("=" * 70)
 
     results = []

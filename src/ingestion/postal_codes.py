@@ -136,11 +136,11 @@ def get_ingested_postal_codes(prefix: str | None = None) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    # Run ingestion with configured prefix
-    for prefix in settings.postal_code_prefixes:
-        count = ingest_postal_codes(prefix=prefix)
-        print(f"\nIngested {count} postal codes")
+    # Run ingestion with all postal codes
 
-        df = get_ingested_postal_codes(prefix=prefix)
-        print(f"\nSample of {len(df)} postal codes:")
-        print(df.head())
+    count = ingest_postal_codes()
+    print(f"\nIngested {count} postal codes")
+
+    df = get_ingested_postal_codes()
+    print(f"\nSample of {len(df)} postal codes:")
+    print(df.head())

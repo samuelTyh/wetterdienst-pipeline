@@ -1,4 +1,4 @@
-"""Prefect flow for postal code ingestion."""
+"""(Deprecated)Prefect flow for postal code ingestion."""
 
 from prefect import flow, task
 

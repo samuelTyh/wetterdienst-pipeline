@@ -104,8 +104,8 @@ services:
       - ./flows:/app/flows
       - ./scripts/serve_all_flows.py:/app/serve_all_flows.py
     working_dir: /app
-    # Serve all flows (makes them visible in UI)
-    command: python serve_all_flows.py
+    # Run postal codes ingestion and Serve all flows (makes them visible in UI)
+    command: bash -c "python src/ingestion/postal_codes.py && python serve_all_flows.py"
 
 volumes:
   postgres_data:

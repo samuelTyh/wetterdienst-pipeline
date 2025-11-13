@@ -11,6 +11,7 @@ from src.database.schema import (
     PostalCode,
     WeatherForecast,
     WeatherObservation,
+    WeatherObservationSynop,
     WeatherStation,
     model_to_dict,
 )
@@ -56,6 +57,27 @@ def insert_weather_stations_df(df: pd.DataFrame) -> None:
     """
     client = get_client()
     client.insert_df("raw.weather_stations", df)
+
+
+def insert_weather_observations_synop(observations: list[WeatherObservationSynop]) -> None:
+    """Insert SYNOP weather observations into raw.weather_observations_synop table.
+
+    Args:
+        observations: List of SYNOP observation models
+    """
+    client = get_client()
+    data = [list(model_to_dict(obs).values()) for obs in observations]
+    client.insert("raw.weather_observations_synop", data)
+
+
+def insert_weather_observations_synop_df(df: pd.DataFrame) -> None:
+    """Insert SYNOP weather observations from DataFrame.
+
+    Args:
+        df: DataFrame with SYNOP observation data
+    """
+    client = get_client()
+    client.insert_df("raw.weather_observations_synop", df)
 
 
 def insert_weather_observations(observations: list[WeatherObservation]) -> None:
@@ -178,26 +200,30 @@ def get_weather_stations(
     if observation_type:
         query += f" AND observation_type = '{observation_type}'"
 
-    # If postal code prefix provided, do spatial filtering
-    # This is simplified - in practice, you'd do proper spatial joins
-    # if postal_code_prefix:
-    #     # Get bounding box of postal codes with this prefix
-    #     bounds_query = f"""
-    #     SELECT
-    #         min(centroid_lat) as min_lat,
-    #         max(centroid_lat) as max_lat,
-    #         min(centroid_lon) as min_lon,
-    #         max(centroid_lon) as max_lon
-    #     FROM raw.postal_codes
-    #     WHERE plz LIKE '{postal_code_prefix}%'
-    #     """
-    #     bounds_result = client.execute(bounds_query)
-    #     if bounds_result.result_rows:
-    #         min_lat, max_lat, min_lon, max_lon = bounds_result.result_rows[0]
-    #         query += f" AND lat BETWEEN {min_lat} AND {max_lat}"
-    #         query += f" AND lon BETWEEN {min_lon} AND {max_lon}"
-
     query += " ORDER BY id"
+    return client.query_df(query)
+
+
+def get_latest_observations_synop(
+    source_id: int | None = None,
+    limit: int = 100,
+) -> pd.DataFrame:
+    """Get latest SYNOP weather observations.
+
+    Args:
+        source_id: Optional filter by source ID
+        limit: Maximum number of records to return
+
+    Returns:
+        DataFrame with SYNOP observation data
+    """
+    client = get_client()
+    query = "SELECT * FROM raw.weather_observations_synop WHERE 1=1"
+
+    if source_id:
+        query += f" AND source_id = {source_id}"
+
+    query += f" ORDER BY timestamp DESC LIMIT {limit}"
     return client.query_df(query)
 
 
@@ -257,6 +283,7 @@ def get_table_counts() -> dict[str, int]:
     tables = {
         "raw.postal_codes": "raw.postal_codes",
         "raw.weather_stations": "raw.weather_stations",
+        "raw.weather_observations_synop": "raw.weather_observations_synop",
         "raw.weather_observations": "raw.weather_observations",
         "raw.weather_forecasts": "raw.weather_forecasts",
         "staging.observations_by_postal_code": "staging.observations_by_postal_code",
@@ -285,7 +312,13 @@ def get_database_status() -> dict[str, Any]:
 
     # Get latest ingestion timestamps
     latest_timestamps = {}
-    for table in ["postal_codes", "weather_stations", "weather_observations", "weather_forecasts"]:
+    for table in [
+        "postal_codes",
+        "weather_stations",
+        "weather_observations_synop",
+        "weather_observations",
+        "weather_forecasts",
+    ]:
         try:
             query = f"SELECT max(ingested_at) FROM raw.{table}"
             result = client.execute(query)
@@ -294,7 +327,17 @@ def get_database_status() -> dict[str, Any]:
         except Exception:
             pass
 
-    # Get date range for observations and forecasts
+    # Get date range for SYNOP observations
+    try:
+        synop_range = client.execute(
+            "SELECT min(timestamp), max(timestamp) FROM raw.weather_observations_synop"
+        )
+        if synop_range.result_rows and synop_range.result_rows[0][0]:
+            counts["synop_observation_date_range"] = synop_range.result_rows[0]
+    except Exception:
+        pass
+
+    # Get date range for observations
     try:
         obs_range = client.execute(
             "SELECT min(timestamp), max(timestamp) FROM raw.weather_observations"
@@ -304,6 +347,7 @@ def get_database_status() -> dict[str, Any]:
     except Exception:
         pass
 
+    # Get date range for forecasts
     try:
         fc_range = client.execute(
             "SELECT min(timestamp), max(timestamp) FROM raw.weather_forecasts"

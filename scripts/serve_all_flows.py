@@ -11,12 +11,13 @@ Usage:
 
 from prefect import serve
 
+from flows.ingest_observations import ingest_weather_observations_flow
+
 # Import all flow functions
-from flows.ingest_postal_codes import ingest_postal_codes_flow
+# from flows.ingest_postal_codes import ingest_postal_codes_flow
 from flows.ingest_weather_stations import ingest_weather_stations_flow
 
 # Note: Import other flows as they are created
-# from flows.ingest_observations import ingest_observations_flow
 # from flows.ingest_forecasts import ingest_forecasts_flow
 # from flows.transform_weather import transform_weather_flow
 
@@ -33,15 +34,15 @@ def main():
     deployments = []
 
     # Postal Codes Ingestion (manual/one-time)
-    print("→ Configuring: postal-codes-ingestion")
-    deployments.append(
-        ingest_postal_codes_flow.to_deployment(
-            name="postal-codes-ingestion",
-            description="One-time ingestion of German postal codes from GitHub",
-            tags=["ingestion", "postal-codes", "one-time"],
-            version="1.0",
-        )
-    )
+    # print("→ Configuring: postal-codes-ingestion")
+    # deployments.append(
+    #     ingest_postal_codes_flow.to_deployment(
+    #         name="postal-codes-ingestion",
+    #         description="One-time ingestion of German postal codes from GitHub",
+    #         tags=["ingestion", "postal-codes", "one-time"],
+    #         version="1.0",
+    #     )
+    # )
 
     # Weather Stations Ingestion (manual/periodic)
     print("→ Configuring: weather-stations-ingestion")
@@ -59,17 +60,18 @@ def main():
         )
 
     # Weather Observations Ingestion (hourly)
-    # Uncomment when flow is created:
-    # print("→ Configuring: observations-hourly")
-    # deployments.append(
-    #     ingest_observations_flow.to_deployment(
-    #         name="observations-hourly",
-    #         description="Hourly weather observations ingestion from BrightSky API",
-    #         tags=["ingestion", "observations", "scheduled"],
-    #         cron="0 * * * *",  # Every hour
-    #         version="1.0",
-    #     )
-    # )
+    print("→ Configuring: observations-hourly")
+    for prefix in berlin_postal_code_prefix:
+        deployments.append(
+            ingest_weather_observations_flow.to_deployment(
+                name=f"observations-hourly-prefix-{prefix}",
+                description=f"Hourly weather observations ingestion for prefix {prefix}",
+                parameters={"prefix": prefix},
+                tags=["ingestion", "observations", "scheduled"],
+                cron="0 * * * *",  # Every hour
+                version="1.0",
+            )
+        )
 
     # Weather Forecasts Ingestion (every 6 hours)
     # Uncomment when flow is created:

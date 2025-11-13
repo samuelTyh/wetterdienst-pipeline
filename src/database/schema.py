@@ -36,8 +36,8 @@ class WeatherStation(BaseModel):
     ingested_at: datetime = Field(default_factory=datetime.now, description="Ingestion timestamp")
 
 
-class WeatherObservation(BaseModel):
-    """Weather observation model."""
+class WeatherObservationSynop(BaseModel):
+    """SYNOP weather observation model (10-minute resolution from /current_weather)."""
 
     source_id: int = Field(..., description="Reference to weather_stations.id")
     timestamp: datetime = Field(..., description="Observation timestamp")
@@ -45,7 +45,45 @@ class WeatherObservation(BaseModel):
     condition: str | None = Field(None, description="Weather condition")
     dew_point: float | None = Field(None, description="Dew point in °C")
     icon: str | None = Field(None, description="Icon identifier")
-    precipitation: float | None = Field(None, description="Precipitation in mm")
+    pressure_msl: float | None = Field(None, description="Mean sea level pressure in hPa")
+    relative_humidity: float | None = Field(
+        None, description="Relative humidity percentage (0-100)"
+    )
+    temperature: float | None = Field(None, description="Temperature in °C")
+    visibility: float | None = Field(None, description="Visibility in meters")
+    precipitation_10: float | None = Field(None, description="Precipitation in last 10 min (mm)")
+    precipitation_30: float | None = Field(None, description="Precipitation in last 30 min (mm)")
+    precipitation_60: float | None = Field(None, description="Precipitation in last 60 min (mm)")
+    solar_10: float | None = Field(None, description="Solar radiation in last 10 min (W/m²)")
+    solar_30: float | None = Field(None, description="Solar radiation in last 30 min (W/m²)")
+    solar_60: float | None = Field(None, description="Solar radiation in last 60 min (W/m²)")
+    sunshine_30: float | None = Field(None, description="Sunshine in last 30 min (minutes)")
+    sunshine_60: float | None = Field(None, description="Sunshine in last 60 min (minutes)")
+    wind_direction_10: float | None = Field(None, description="Wind direction in degrees (0-360)")
+    wind_direction_30: float | None = Field(None, description="Wind direction in degrees (0-360)")
+    wind_direction_60: float | None = Field(None, description="Wind direction in degrees (0-360)")
+    wind_speed_10: float | None = Field(None, description="Wind speed in last 10 min (km/h)")
+    wind_speed_30: float | None = Field(None, description="Wind speed in last 30 min (km/h)")
+    wind_speed_60: float | None = Field(None, description="Wind speed in last 60 min (km/h)")
+    wind_gust_direction_10: float | None = Field(None, description="Wind gust direction in degrees")
+    wind_gust_direction_30: float | None = Field(None, description="Wind gust direction in degrees")
+    wind_gust_direction_60: float | None = Field(None, description="Wind gust direction in degrees")
+    wind_gust_speed_10: float | None = Field(None, description="Wind gust speed in km/h")
+    wind_gust_speed_30: float | None = Field(None, description="Wind gust speed in km/h")
+    wind_gust_speed_60: float | None = Field(None, description="Wind gust speed in km/h")
+    ingested_at: datetime = Field(default_factory=datetime.now, description="Ingestion timestamp")
+
+
+class WeatherObservation(BaseModel):
+    """Hourly weather observation model (for historical data from /weather)."""
+
+    source_id: int = Field(..., description="Reference to weather_stations.id")
+    timestamp: datetime = Field(..., description="Observation timestamp")
+    cloud_cover: float | None = Field(None, description="Cloud cover percentage (0-100)")
+    condition: str | None = Field(None, description="Weather condition")
+    dew_point: float | None = Field(None, description="Dew point in °C")
+    icon: str | None = Field(None, description="Icon identifier")
+    precipitation: float | None = Field(None, description="Precipitation in mm (hourly)")
     precipitation_probability: float | None = Field(
         None, description="Precipitation probability (0-100)"
     )
@@ -56,7 +94,7 @@ class WeatherObservation(BaseModel):
     relative_humidity: float | None = Field(
         None, description="Relative humidity percentage (0-100)"
     )
-    sunshine: float | None = Field(None, description="Sunshine duration in minutes")
+    sunshine: float | None = Field(None, description="Sunshine duration in minutes (hourly)")
     temperature: float | None = Field(None, description="Temperature in °C")
     visibility: float | None = Field(None, description="Visibility in meters")
     wind_direction: float | None = Field(None, description="Wind direction in degrees (0-360)")

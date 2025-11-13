@@ -1,4 +1,5 @@
 -- Initial database schema for weather data pipeline
+-- Updated to separate SYNOP observations from regular hourly observations
 
 -- Create database if not exists (handled by environment variables in docker-compose)
 CREATE DATABASE IF NOT EXISTS raw;
@@ -35,12 +36,52 @@ CREATE TABLE IF NOT EXISTS raw.weather_stations
     ingested_at DateTime DEFAULT now()
 )
 ENGINE = ReplacingMergeTree(ingested_at)
-PRIMARY KEY (id)
 ORDER BY (id, observation_type)
 COMMENT 'Weather station metadata from BrightSky API /sources endpoint';
 
--- Weather observations raw table
--- Complete fields from /weather endpoint (observation type)
+-- SYNOP observations (10-minute resolution, current weather)
+-- Data from /current_weather endpoint
+CREATE TABLE IF NOT EXISTS raw.weather_observations_synop
+(
+    source_id UInt32,                       -- Reference to weather_stations.id
+    timestamp DateTime,                     -- Observation timestamp
+    -- Standard weather fields
+    cloud_cover Nullable(Float64),          -- Cloud cover percentage (0-100)
+    condition Nullable(String),             -- Weather condition (e.g., "dry", "rain", "snow")
+    dew_point Nullable(Float64),            -- Dew point in °C
+    icon Nullable(String),                  -- Icon identifier (e.g., "clear-day", "rain")
+    pressure_msl Nullable(Float64),         -- Mean sea level pressure in hPa
+    relative_humidity Nullable(Float64),    -- Relative humidity percentage (0-100)
+    temperature Nullable(Float64),          -- Temperature in °C
+    visibility Nullable(Float64),           -- Visibility in meters
+    precipitation_10 Nullable(Float64),     -- Precipitation in last 10 minutes (mm)
+    precipitation_30 Nullable(Float64),     -- Precipitation in last 30 minutes (mm)
+    precipitation_60 Nullable(Float64),     -- Precipitation in last 60 minutes (mm)
+    solar_10 Nullable(Float64),            -- Solar radiation in last 10 minutes (W/m²)
+    solar_30 Nullable(Float64),            -- Solar radiation in last 30 minutes (W/m²)
+    solar_60 Nullable(Float64),            -- Solar radiation in last 60 minutes (W/m²)
+    sunshine_30 Nullable(Float64),         -- Sunshine duration in last 30 minutes (minutes)
+    sunshine_60 Nullable(Float64),         -- Sunshine duration in last 60 minutes (minutes)
+    wind_direction_10 Nullable(Float64),   -- Wind direction in degrees (0-360) for last 10 minutes
+    wind_direction_30 Nullable(Float64),   -- Wind direction in degrees (0-360) for last 30 minutes
+    wind_direction_60 Nullable(Float64),   -- Wind direction in degrees (0-360) for last 60 minutes
+    wind_speed_10 Nullable(Float64),       -- Wind speed in km/h for last 10 minutes
+    wind_speed_30 Nullable(Float64),       -- Wind speed in km/h for last 30 minutes
+    wind_speed_60 Nullable(Float64),       -- Wind speed in km/h for last 60 minutes
+    wind_gust_direction_10 Nullable(Float64), -- Wind gust direction in degrees for last 10 minutes
+    wind_gust_direction_30 Nullable(Float64), -- Wind gust direction in degrees for last 30 minutes
+    wind_gust_direction_60 Nullable(Float64), -- Wind gust direction in degrees for last 60 minutes
+    wind_gust_speed_10 Nullable(Float64),  -- Wind gust speed in km/h for last 10 minutes
+    wind_gust_speed_30 Nullable(Float64),  -- Wind gust speed in km/h for last 30 minutes
+    wind_gust_speed_60 Nullable(Float64),  -- Wind gust speed in km/h for last 60 minutes
+    ingested_at DateTime DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+ORDER BY (source_id, timestamp)
+COMMENT 'SYNOP observations (10-minute resolution) from BrightSky /current_weather endpoint';
+
+-- Weather observations raw table (hourly observations for historical data)
+-- Data from /weather endpoint (observation type)
 CREATE TABLE IF NOT EXISTS raw.weather_observations
 (
     source_id UInt32,                       -- Reference to weather_stations.id
@@ -49,12 +90,12 @@ CREATE TABLE IF NOT EXISTS raw.weather_observations
     condition Nullable(String),             -- Weather condition (e.g., "dry", "rain", "snow")
     dew_point Nullable(Float64),            -- Dew point in °C
     icon Nullable(String),                  -- Icon identifier (e.g., "clear-day", "rain")
-    precipitation Nullable(Float64),        -- Precipitation in mm
+    precipitation Nullable(Float64),        -- Precipitation in mm (hourly)
     precipitation_probability Nullable(Float64),           -- Precipitation probability (0-100)
     precipitation_probability_6h Nullable(Float64),        -- 6h precipitation probability
     pressure_msl Nullable(Float64),         -- Mean sea level pressure in hPa
     relative_humidity Nullable(Float64),    -- Relative humidity percentage (0-100)
-    sunshine Nullable(Float64),             -- Sunshine duration in minutes
+    sunshine Nullable(Float64),             -- Sunshine duration in minutes (hourly)
     temperature Nullable(Float64),          -- Temperature in °C
     visibility Nullable(Float64),           -- Visibility in meters
     wind_direction Nullable(Float64),       -- Wind direction in degrees (0-360)
@@ -65,7 +106,7 @@ CREATE TABLE IF NOT EXISTS raw.weather_observations
 )
 ENGINE = ReplacingMergeTree(ingested_at)
 ORDER BY (source_id, timestamp)
-COMMENT 'Raw weather observations from BrightSky API';
+COMMENT 'Hourly weather observations from BrightSky /weather endpoint (for historical data)';
 
 -- Weather forecasts raw table
 -- Complete fields from /weather endpoint (forecast type)
