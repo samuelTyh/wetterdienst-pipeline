@@ -17,9 +17,8 @@ from flows.ingest_observations import ingest_weather_observations_flow
 # Import all flow functions
 from flows.ingest_postal_codes import ingest_postal_codes_flow
 from flows.ingest_weather_stations import ingest_weather_stations_flow
-
-# Note: Import other flows as they are created
-# from flows.transform_weather import transform_weather_flow
+from flows.transform_forecasts import transform_forecasts_flow
+from flows.transform_observations import transform_observations_flow
 
 
 def main():
@@ -46,7 +45,10 @@ def main():
 
     # Weather Stations Ingestion (manual/periodic)
     print("-> Configuring: weather-stations-ingestion")
-    berlin_postal_code_prefix = ["10", "12", "13"]
+    berlin_postal_code_prefix = [
+        "10",
+        # "12", "13"
+    ]
     print(f"-> Berlin weather stations ingestion: {berlin_postal_code_prefix}")
     for prefix in berlin_postal_code_prefix:
         deployments.append(
@@ -87,18 +89,33 @@ def main():
             )
         )
 
-    # Weather Data Transformation (every 2 hours)
-    # Uncomment when flow is created:
-    # print("-> Configuring: transform-weather-2hourly")
-    # deployments.append(
-    #     transform_weather_flow.to_deployment(
-    #         name="transform-weather-2hourly",
-    #         description="Transform raw weather data to staging tables every 2 hours",
-    #         tags=["transformation", "scheduled"],
-    #         cron="0 */2 * * *",  # Every 2 hours
-    #         version="1.0",
-    #     )
-    # )
+    # Observation Transformation (every 2 hours)
+    print("-> Configuring: transform-observations-2hourly")
+    for prefix in berlin_postal_code_prefix:
+        deployments.append(
+            transform_observations_flow.to_deployment(
+                name=f"transform-observations-2hourly-prefix-{prefix}",
+                description=f"Transform SYNOP observations to postal codes (prefix {prefix})",
+                parameters={"prefix": prefix, "hours_back": 24},
+                tags=["transformation", "observations", "scheduled"],
+                cron="0 */2 * * *",  # Every 2 hours
+                version="1.0",
+            )
+        )
+
+    # Forecast Transformation (every 2 hours)
+    print("-> Configuring: transform-forecasts-2hourly")
+    for prefix in berlin_postal_code_prefix:
+        deployments.append(
+            transform_forecasts_flow.to_deployment(
+                name=f"transform-forecasts-2hourly-prefix-{prefix}",
+                description=f"Transform forecasts to postal codes (prefix {prefix})",
+                parameters={"prefix": prefix, "days_ahead": 7},
+                tags=["transformation", "forecasts", "scheduled"],
+                cron="0 */2 * * *",  # Every 2 hours
+                version="1.0",
+            )
+        )
 
     print()
     print(f"Total deployments: {len(deployments)}")

@@ -34,7 +34,10 @@ def get_forecast_stations(postal_code_prefix: str | None = None) -> pd.DataFrame
     else:
         stations_filtered = pd.DataFrame(columns=stations.columns)
 
-    print(f"Found {len(stations_filtered)} forecast stations")
+    print(
+        f"Filtered {len(stations)} forecast stations → "
+        f"{len(stations_filtered)} stations (last_record >= 8 days ahead)"
+    )
 
     return stations_filtered
 
