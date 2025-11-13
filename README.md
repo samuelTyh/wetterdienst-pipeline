@@ -67,8 +67,8 @@ scripts/
 ## Data Flow
 
 ### Ingestion (Raw Layer)
-1. **Postal Codes** → `raw.postal_codes` (it ingests directly after the service spinning up)
-2. **Weather Stations** → `raw.weather_stations`
+1. **Postal Codes** → `raw.postal_codes` (The data ingestion runs directly after the service spinning up)
+2. **Weather Stations** → `raw.weather_stations` (Should be run manually after the service is up)
 3. **SYNOP Observations** → `raw.weather_observations_synop` (hourly, 10-min resolution)
 4. **Forecasts** → `raw.weather_forecasts` (6-hourly, 7 days ahead)
 
