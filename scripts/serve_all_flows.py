@@ -11,14 +11,14 @@ Usage:
 
 from prefect import serve
 
+from flows.ingest_forecasts import ingest_forecasts_flow
 from flows.ingest_observations import ingest_weather_observations_flow
 
 # Import all flow functions
-# from flows.ingest_postal_codes import ingest_postal_codes_flow
+from flows.ingest_postal_codes import ingest_postal_codes_flow
 from flows.ingest_weather_stations import ingest_weather_stations_flow
 
 # Note: Import other flows as they are created
-# from flows.ingest_forecasts import ingest_forecasts_flow
 # from flows.transform_weather import transform_weather_flow
 
 
@@ -34,20 +34,20 @@ def main():
     deployments = []
 
     # Postal Codes Ingestion (manual/one-time)
-    # print("→ Configuring: postal-codes-ingestion")
-    # deployments.append(
-    #     ingest_postal_codes_flow.to_deployment(
-    #         name="postal-codes-ingestion",
-    #         description="One-time ingestion of German postal codes from GitHub",
-    #         tags=["ingestion", "postal-codes", "one-time"],
-    #         version="1.0",
-    #     )
-    # )
+    print("-> Configuring: postal-codes-ingestion")
+    deployments.append(
+        ingest_postal_codes_flow.to_deployment(
+            name="postal-codes-ingestion",
+            description="One-time ingestion of German postal codes from GitHub",
+            tags=["ingestion", "postal-codes", "one-time"],
+            version="1.0",
+        )
+    )
 
     # Weather Stations Ingestion (manual/periodic)
-    print("→ Configuring: weather-stations-ingestion")
+    print("-> Configuring: weather-stations-ingestion")
     berlin_postal_code_prefix = ["10", "12", "13"]
-    print(f"→ Berlin weather stations ingestion: {berlin_postal_code_prefix}")
+    print(f"-> Berlin weather stations ingestion: {berlin_postal_code_prefix}")
     for prefix in berlin_postal_code_prefix:
         deployments.append(
             ingest_weather_stations_flow.to_deployment(
@@ -60,35 +60,36 @@ def main():
         )
 
     # Weather Observations Ingestion (hourly)
-    print("→ Configuring: observations-hourly")
+    print("-> Configuring: current-weather-observations-hourly")
     for prefix in berlin_postal_code_prefix:
         deployments.append(
             ingest_weather_observations_flow.to_deployment(
-                name=f"observations-hourly-prefix-{prefix}",
-                description=f"Hourly weather observations ingestion for prefix {prefix}",
+                name=f"current-weather-observations-hourly-prefix-{prefix}",
+                description=f"Hourly current weather from SYNOP stations (prefix {prefix})",
                 parameters={"prefix": prefix},
-                tags=["ingestion", "observations", "scheduled"],
-                cron="0 * * * *",  # Every hour
-                version="1.0",
+                tags=["ingestion", "observations", "synop", "current-weather", "scheduled"],
+                cron="0 * * * *",  # Every hour (DWD updates twice per hour)
+                version="2.0",  # Updated to use /current_weather + SYNOP
             )
         )
 
     # Weather Forecasts Ingestion (every 6 hours)
-    # Uncomment when flow is created:
-    # print("→ Configuring: forecasts-6hourly")
-    # deployments.append(
-    #     ingest_forecasts_flow.to_deployment(
-    #         name="forecasts-6hourly",
-    #         description="Weather forecasts ingestion every 6 hours from BrightSky API",
-    #         tags=["ingestion", "forecasts", "scheduled"],
-    #         cron="0 */6 * * *",  # Every 6 hours
-    #         version="1.0",
-    #     )
-    # )
+    print("-> Configuring: forecasts-6hourly")
+    for prefix in berlin_postal_code_prefix:
+        deployments.append(
+            ingest_forecasts_flow.to_deployment(
+                name=f"forecasts-6hourly-prefix-{prefix}",
+                description=f"7-day weather forecasts from BrightSky API (prefix {prefix})",
+                parameters={"prefix": prefix, "days_ahead": 7},
+                tags=["ingestion", "forecasts", "scheduled"],
+                cron="0 */6 * * *",  # Every 6 hours
+                version="1.0",
+            )
+        )
 
     # Weather Data Transformation (every 2 hours)
     # Uncomment when flow is created:
-    # print("→ Configuring: transform-weather-2hourly")
+    # print("-> Configuring: transform-weather-2hourly")
     # deployments.append(
     #     transform_weather_flow.to_deployment(
     #         name="transform-weather-2hourly",
