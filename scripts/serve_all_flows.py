@@ -89,30 +89,30 @@ def main():
             )
         )
 
-    # Observation Transformation (every hour)
+    # Observation Transformation (every 2 hours)
     print("-> Configuring: transform-observations-2hourly")
     for prefix in postal_code_prefix:
         deployments.append(
             transform_observations_flow.to_deployment(
-                name=f"transform-observations-hourly-prefix-{prefix}",
+                name=f"transform-observations-2hourly-prefix-{prefix}",
                 description=f"Transform SYNOP observations to postal codes (prefix {prefix})",
                 parameters={"prefix": prefix, "hours_back": 24},
                 tags=["transformation", "observations", "scheduled"],
-                cron="10 * * * *",  # Every hour at 10 minutes past the hour
+                cron="10 */2 * * *",  # Every 2 hour at 10 minutes past the hour
                 version="1.0",
             )
         )
 
-    # Forecast Transformation (every hour)
-    print("-> Configuring: transform-forecasts-2hourly")
+    # Forecast Transformation (every 6 hours)
+    print("-> Configuring: transform-forecasts-6hourly")
     for prefix in postal_code_prefix:
         deployments.append(
             transform_forecasts_flow.to_deployment(
-                name=f"transform-forecasts-hourly-prefix-{prefix}",
+                name=f"transform-forecasts-6hourly-prefix-{prefix}",
                 description=f"Transform forecasts to postal codes (prefix {prefix})",
                 parameters={"prefix": prefix, "days_ahead": 7},
                 tags=["transformation", "forecasts", "scheduled"],
-                cron="10 * * * *",  # Every hour at 10 minutes past the hour
+                cron="10 */6 * * *",  # Every 6 hours at 10 minutes past the hour
                 version="1.0",
             )
         )

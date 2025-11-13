@@ -82,7 +82,7 @@ scripts/
    - Distance-weighted averaging from nearby forecast stations
    - Quality scoring based on station count + data completeness
 
-## Prefect Deployments (16 Total)
+## Prefect Deployments (6 Total)
 
 | Flow | Schedule | Description |
 |------|----------|-------------|
@@ -91,7 +91,7 @@ scripts/
 | `observations-hourly-prefix-10` | Hourly | Ingest SYNOP current weather |
 | `forecasts-6hourly-prefix-10` | 6-hourly | Ingest 7-day forecasts |
 | `transform-observations-prefix-10` | hourly | Aggregate to postal codes |
-| `transform-forecasts-prefix-10` | hourly | Aggregate to postal codes |
+| `transform-forecasts-prefix-10` | 6-hourly | Aggregate to postal codes |
 
 ## Configuration
 
